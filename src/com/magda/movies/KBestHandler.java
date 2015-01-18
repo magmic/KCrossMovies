@@ -29,7 +29,7 @@ public class KBestHandler {
 		try (BufferedReader brTask = new BufferedReader(new FileReader("C:\\Users\\Okruszon\\Desktop\\Programming of Intelligent Information Systems\\Part II, Task 3\\task.csv")))
 		{
 			BufferedReader brTrain = new BufferedReader(new FileReader("C:\\Users\\Okruszon\\Desktop\\Programming of Intelligent Information Systems\\Part II, Task 3\\train.csv")); 
-			FileWriter fOutput = new FileWriter("C:\\Users\\Okruszon\\Desktop\\Programming of Intelligent Information Systems\\Part II, Task 3\\result"+fileEnding+".csv"); 
+			FileWriter fOutput = new FileWriter("C:\\Users\\Okruszon\\Desktop\\Programming of Intelligent Information Systems\\Part II, Task 4\\result"+fileEnding+".csv"); 
 			
 			//read training set from file to ArrayList
 			String currentTrainLine;
@@ -70,7 +70,6 @@ public class KBestHandler {
 				int movieId = Integer.valueOf(fieldsTask[2]);
 				
 				predictedResult = predictResult(movieId, (ArrayList<Evaluation>) processedMap.get(userId));
-				
 				
 				fOutput.write(fieldsTask[0]+";"+fieldsTask[1]+";"+fieldsTask[2]+";"+predictedResult+"\n");
 			}
@@ -114,8 +113,10 @@ public class KBestHandler {
 		}
 		
 		int sum = 0;
-		for (int i=0; i<k; i++)
+		for (int i=0; i<k; i++) //{
 			sum += kBestMovieEvals[i];
+			//System.out.println(movieId+1 + " similar to " + (kBestMovieIds[i]+1) + ", distance "+kBestDistances[i]);
+		//}
 		
 		return (int) Math.round(1.0*sum/k);
 	}

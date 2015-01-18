@@ -66,8 +66,9 @@ public class DecisionTree {
 			return root;
 		}
 		Attribute bestAttribute = attributes.get(bestAttributeIndex);
-		System.out.println("best "
-				+ attributes.get(bestAttributeIndex).getName() + " " + bestGain);
+//		System.out.println("best "
+//				+ attributes.get(bestAttributeIndex).getName() + " " + bestGain);
+//		
 		root.setTestAttribute(bestAttribute);
 
 		Node[] children = new Node[bestAttribute.getNumOfBranches()];

@@ -6,7 +6,7 @@ public class Evaluation {
 	private int movieId;
 	private int evaluationValue;
 
-	Evaluation(int userId, int movieId, int evaluationValue) {
+	public Evaluation(int userId, int movieId, int evaluationValue) {
 		this.userId = userId;
 		this.movieId = movieId;
 		this.evaluationValue = evaluationValue;
@@ -21,7 +21,7 @@ public class Evaluation {
 	}
 
 	public int getMovieId() {
-		return movieId;
+		return movieId-1;
 	}
 
 	public void setMovieId(int movieId) {

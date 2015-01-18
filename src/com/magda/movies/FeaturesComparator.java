@@ -13,6 +13,8 @@ public class FeaturesComparator {
 	private double[] weightsNormalized = new double[featuresNumber];
 	
 	private String[][] features = new String[moviesNumber][featuresNumber];
+
+
 	private double[][] comparisonResults = new double[moviesNumber][moviesNumber];
 	
 	public double[][] getComparisonResults() {
@@ -20,9 +22,9 @@ public class FeaturesComparator {
 	}
 
 	FeaturesComparator(String filePath) {
-		prepareWeights();
+		//prepareWeights();
 		prepareFeatures(filePath);
-		prepareComparisonResults();
+		//prepareComparisonResults();
 	}
 	
 	private void prepareWeights() {
@@ -42,6 +44,7 @@ public class FeaturesComparator {
 			while ((sCurrentLine = br.readLine()) != null) {
 				String[] fields = sCurrentLine.split(";");
 				features[count/featuresNumber][count%featuresNumber] = fields.length==4 ? fields[3] : "";
+				
 				//System.out.println(count/featuresNumber+"; "+count%featuresNumber+"; "+features[count/featuresNumber][count%featuresNumber]);
 				count++;
 			} 
@@ -169,5 +172,12 @@ public class FeaturesComparator {
 			e.printStackTrace();
 		}
 		return 0;
+	}
+	public String[][] getFeatures() {
+		return features;
+	}
+
+	public void setFeatures(String[][] features) {
+		this.features = features;
 	}
 }

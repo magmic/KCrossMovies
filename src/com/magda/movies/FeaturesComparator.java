@@ -10,6 +10,7 @@ public class FeaturesComparator {
 	private int featuresNumber = 18;
 	private int moviesNumber = 200;
 	private int[] featuresWeights = {27,23,6,28,11,9,7,10,7,14,10,16,11,22,23,25,13,13};
+	//private int[] featuresWeights = {1,1,1,1,1,1,1,1,4,1,1,1,1,4,1,4,5,1};
 	private double[] weightsNormalized = new double[featuresNumber];
 	
 	private String[][] features = new String[moviesNumber][featuresNumber];
@@ -35,6 +36,16 @@ public class FeaturesComparator {
 			weightsNormalized[i] = featuresWeights[i]/sum;
 	}
 	
+	public void prepareWeights(int[] weightsControl) {
+		double sum = 0;
+		for(int i=0; i<featuresWeights.length; i++)
+			sum += featuresWeights[i]*weightsControl[i];
+		for(int i=0; i<featuresWeights.length; i++)// {
+			weightsNormalized[i] = featuresWeights[i]*weightsControl[i]/sum;
+			//System.out.print(" "+ weightsNormalized[i] +" ");
+		//}
+	}
+	
 	private void prepareFeatures(String filePath) {
 		try (BufferedReader br = new BufferedReader(new FileReader(filePath)))
 		{
@@ -53,7 +64,7 @@ public class FeaturesComparator {
 		}
 	}
 	
-	private void prepareComparisonResults() {
+	public void prepareComparisonResults() {
 		for(int movie=0; movie<moviesNumber; movie++) {
 			for(int movie2=movie; movie2<moviesNumber; movie2++) {
 				if(movie == movie2) {
@@ -61,24 +72,24 @@ public class FeaturesComparator {
 					continue;
 				}
 				double result = 0;
-				result += booleanComparison(movie, movie2, 0); //1 adult
-				result += booleanComparison(movie, movie2, 1); //2 collection
-				result += minOverMax(movie, movie2, 2); //3 budget
-				result += collectionsComparison(movie, movie2, 3); //4 genres
-				result += minOverMax(movie, movie2, 4); //5 popularity
-				result += collectionsComparison(movie, movie2, 5); //6 production
-				result += collectionsComparison(movie, movie2, 6); //7 countries
-				result += dateComparison(movie, movie2, 7); //8 release date
-				result += minOverMax(movie, movie2, 8); //9 revenue
-				result += minOverMax(movie, movie2, 9); //10 runtime
-				result += collectionsComparison(movie, movie2, 10); //11 languages
-				result += avVotesComparison(movie, movie2, 11); //12 average votes
-				result += minOverMax(movie, movie2, 12); //13 votes count
-				result += collectionsComparison(movie, movie2, 13); //14 cast
-				result += collectionsComparison(movie, movie2, 14); //15 keywords
-				result += collectionsComparison(movie, movie2, 15); //16 crew
-				result += collectionsComparison(movie, movie2, 16); //17 lists
-				result += collectionsComparison(movie, movie2, 17); //18 similar movies
+				if(weightsNormalized[0] != 0) result += booleanComparison(movie, movie2, 0); //1 adult
+				if(weightsNormalized[1] != 0) result += booleanComparison(movie, movie2, 1); //2 collection
+				if(weightsNormalized[2] != 0) result += minOverMax(movie, movie2, 2); //3 budget
+				if(weightsNormalized[3] != 0) result += collectionsComparison(movie, movie2, 3); //4 genres
+				if(weightsNormalized[4] != 0) result += minOverMax(movie, movie2, 4); //5 popularity
+				if(weightsNormalized[5] != 0) result += collectionsComparison(movie, movie2, 5); //6 production
+				if(weightsNormalized[6] != 0) result += collectionsComparison(movie, movie2, 6); //7 countries
+				if(weightsNormalized[7] != 0) result += dateComparison(movie, movie2, 7); //8 release date
+				if(weightsNormalized[8] != 0) result += minOverMax(movie, movie2, 8); //9 revenue
+				if(weightsNormalized[9] != 0) result += minOverMax(movie, movie2, 9); //10 runtime
+				if(weightsNormalized[10] != 0) result += collectionsComparison(movie, movie2, 10); //11 languages
+				if(weightsNormalized[11] != 0) result += avVotesComparison(movie, movie2, 11); //12 average votes
+				if(weightsNormalized[12] != 0) result += minOverMax(movie, movie2, 12); //13 votes count
+				if(weightsNormalized[13] != 0) result += collectionsComparison(movie, movie2, 13); //14 cast
+				if(weightsNormalized[14] != 0) result += collectionsComparison(movie, movie2, 14); //15 keywords
+				if(weightsNormalized[15] != 0) result += collectionsComparison(movie, movie2, 15); //16 crew
+				if(weightsNormalized[16] != 0) result += collectionsComparison(movie, movie2, 16); //17 lists
+				if(weightsNormalized[17] != 0) result += collectionsComparison(movie, movie2, 17); //18 similar movies
 
 				comparisonResults[movie][movie2] = result;
 				comparisonResults[movie2][movie] = result;

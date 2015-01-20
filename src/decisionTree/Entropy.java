@@ -30,7 +30,7 @@ public class Entropy {
 			entropy += -probability * log(probability, 2);
 
 		}
-
+		
 		return entropy;
 
 	}
@@ -46,9 +46,9 @@ public class Entropy {
 		}
 		for (int i = 0; i < subEntropies.length; i++) {
 
-			gain -= (double) setSizes[i] / ((double) data) * subEntropies[i];
+			gain -= ((double) setSizes[i] / ((double) data)) * subEntropies[i];
 		}
-
+	
 		return gain;
 
 	}

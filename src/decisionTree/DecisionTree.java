@@ -19,7 +19,7 @@ public class DecisionTree {
 	}
 
 	public Node buildTree(ArrayList<Evaluation> evaluations,
-			ArrayList<Attribute> attributes) {
+			ArrayList<Attribute> attributes, Node parent) {
 		int bestAttributeIndex = -1;
 		double bestGain = 0;
 
@@ -27,6 +27,9 @@ public class DecisionTree {
 		ArrayList<Evaluation> negativeEvaluation = new ArrayList<Evaluation>();
 
 		Node root = new Node();
+		root.setParent(parent);
+		root.setEntropy(Entropy.calculateEntropy(evaluations));
+
 		int predictedValue = checkExamples(evaluations);
 		if (predictedValue != -1) {
 			root.setLeaf(true);
@@ -35,12 +38,12 @@ public class DecisionTree {
 		}
 
 		if (attributes.size() == 0) {
-			root.setLeaf(true);
+				root.setLeaf(true);
 			root.setPredictedValue(mostCommonValue(evaluations));
 			return root;
 		}
 
-		root.setEntropy(Entropy.calculateEntropy(evaluations));
+		
 		// System.out.println("rentropy" + root.getEntropy()+" "
 		// +attributes.size());
 		for (int i = 0; i < attributes.size(); i++) {
@@ -48,29 +51,29 @@ public class DecisionTree {
 			HashMap<Integer, ArrayList<Evaluation>> map = splitDataSet(
 					attributes.get(i), evaluations, root);
 			double gain = calculateGain(map, root);
-			
-			if (gain > bestGain) {
 
+			if (gain > bestGain) {
+				
 				positiveEvaluation = map.get(positive);
 				negativeEvaluation = map.get(negative);
 				bestAttributeIndex = i;
 				bestGain = gain;
+				
+				
 			}
 
 		}
 
-		if (bestAttributeIndex == -1) {
-
+		if (bestAttributeIndex == -1 || (bestGain<0.1 && root.getParent()!=null)) {
 			root.setLeaf(true);
 			root.setPredictedValue(mostCommonValue(evaluations));
+			
 			return root;
 		}
 		Attribute bestAttribute = attributes.get(bestAttributeIndex);
-//		System.out.println("best "
-//				+ attributes.get(bestAttributeIndex).getName() + " " + bestGain);
-//		
+		
 		root.setTestAttribute(bestAttribute);
-
+		
 		Node[] children = new Node[bestAttribute.getNumOfBranches()];
 		root.setChildren(children);
 		for (int i = 0; i < children.length; i++) {
@@ -82,8 +85,10 @@ public class DecisionTree {
 				subset = negativeEvaluation;
 			}
 			if (subset.size() == 0) {
-
+				
 				children[i] = new Node();
+				children[i].setParent(root);
+				
 				children[i].setLeaf(true);
 				children[i].setPredictedValue(mostCommonValue(evaluations));
 			} else {
@@ -91,8 +96,8 @@ public class DecisionTree {
 				if (attributes.contains(bestAttribute)) {
 					attributes.remove(bestAttribute);
 				}
-
-				 children[i] = buildTree(subset, attributes);
+				
+				children[i] = buildTree(subset, attributes, root);
 
 			}
 		}
@@ -166,10 +171,9 @@ public class DecisionTree {
 
 		ArrayList<Evaluation> positives = new ArrayList<Evaluation>();
 		ArrayList<Evaluation> negatives = new ArrayList<Evaluation>();
-		
+
 		for (Evaluation evaluation : evaluations) {
-		
-				
+
 			if (features[evaluation.getMovieId()][attribute.getFeatureIndex()]
 					.contains(((CollectionAttribute) attribute).getValue())) {
 				positives.add(evaluation);

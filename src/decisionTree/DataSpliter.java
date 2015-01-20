@@ -15,7 +15,7 @@ public class DataSpliter {
 			ArrayList<Evaluation> dataSet = allData.get(userId);
 			ArrayList<Evaluation> train =new ArrayList<Evaluation>(dataSet);
 			ArrayList<Evaluation> val =new ArrayList<Evaluation>();
-			int validationSize = (int)Math.round(0.2*(double)train.size());
+			int validationSize = (int)Math.round(0.3*(double)train.size());
 			Random rand = new Random();
 			
 			while(val.size()!=validationSize){

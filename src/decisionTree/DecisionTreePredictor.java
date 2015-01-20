@@ -1,6 +1,7 @@
 package decisionTree;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -11,101 +12,211 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 import com.magda.movies.Evaluation;
+import com.magda.movies.TAndVSetInitializor;
 
 public class DecisionTreePredictor {
 	private String[][] features;
 
-	private int fileEnding;
-
-	public DecisionTreePredictor(String[][] features) {
+	public DecisionTreePredictor(String[][] features, boolean featureSelection) {
 		this.features = features;
+		HashMap<Integer, ArrayList<Evaluation>> processedMap = new HashMap<Integer, ArrayList<Evaluation>>(); // mapping:
+		HashMap<Integer, ArrayList<Attribute>> userAttributes = new HashMap<Integer, ArrayList<Attribute>>(); // ->
+
+		prepareProcessMap(processedMap, DataReader.readTrainSet());
+		prepareAttributes(userAttributes, processedMap);
+		if (featureSelection) {
+			decisionTreeWithFeatureSelection(processedMap, userAttributes);
+		} else {
+			decisionTreeWithoutFeatureSelection(processedMap, userAttributes);
+		}
+
+	}
+
+	private void decisionTreeWithoutFeatureSelection(
+			HashMap<Integer, ArrayList<Evaluation>> processedMap,
+			HashMap<Integer, ArrayList<Attribute>> userAttributes) {
+		HashMap<Integer, Node> treeMap = new HashMap<Integer, Node>();
+		createAllTrees(userAttributes, treeMap, processedMap);
+	
+		predictAndSave(treeMap, "without");
+
+	}
+
+	public void decisionTreeWithFeatureSelection(
+			HashMap<Integer, ArrayList<Evaluation>> processedMap,
+			HashMap<Integer, ArrayList<Attribute>> userAttributes) {
+
+		DataSpliter data = new DataSpliter(processedMap);
+		HashMap<Integer, ArrayList<Evaluation>> train = data.getTrainMap();
+		
+		HashMap<Integer, ArrayList<Attribute>> selected = new HashMap<Integer, ArrayList<Attribute>> ();
+		HashMap<Integer, ArrayList<Evaluation>> validation = data
+				.getValidationMap();
+
+		HashMap<Integer, Node> treeMap = new HashMap<Integer, Node>();
+
+		for (Integer userId : train.keySet()) {
+		
+			
+				ArrayList<Attribute> userAllAttr = userAttributes.get(userId);
+				ArrayList<Attribute> selectedAttr = new ArrayList<Attribute>(userAllAttr);
+				ArrayList<Attribute> selectedAttrTemp = new ArrayList<Attribute>(selectedAttr);
+
+				double bestQ = 0;
+				Node bestTree = null;
+				while (selectedAttr.size()!=1) {
+					
+					double previousBestQ = bestQ;
+					
+					for (Attribute attribute : userAllAttr) {
+						ArrayList<Attribute> testedAttr = new ArrayList<Attribute>(
+								selectedAttr);
+						testedAttr.remove(attribute);
+						
+						ArrayList<Attribute> attToTree = new ArrayList<Attribute>(testedAttr);
+						Node node = createUserTree(attToTree,
+								train.get(userId));
+					
+						//printTree(node);
+						double Q = testData(validation.get(userId), node);
+						
+						
+						if (Q > bestQ) {
+							bestQ = Q;
+							System.out.println(bestQ + " " + attribute.getName());
+							bestTree = node;
+							
+							selectedAttrTemp = testedAttr;
+							System.out.println("size " +testedAttr.size());
+							//System.out.println("size " +selectedAttrTemp.size());
+						}
+					}
+					
+					selectedAttr = selectedAttrTemp;
+					if (previousBestQ == bestQ) {
+						break;
+					}
+					
+					
+				}
+				Node node = createUserTree(selectedAttr,
+						processedMap.get(userId));
+				treeMap.put(userId, node);
+				selected.put(userId, selectedAttr);
+			
+		}
+	
+		predictAndSave(treeMap, "with");
+		
+	}
+
+	private double testData(ArrayList<Evaluation> validation, Node root) {
+		double Q = 0;
+		int correctGuesses = 0;
+		for (Evaluation eval : validation) {
+
+			int predictedResult = predictResult(root, eval.getMovieId());
+			//System.out.println(predictedResult + " " + eval.getEvaluation());
+			if (predictedResult == eval.getEvaluation())// (Math.abs(predictedResult-realScore)<=1)
+				correctGuesses++;
+		}
+		Q = (double)correctGuesses / (double)validation.size();
+		return Q;
+
+	}
+
+	private void predictAndSave(HashMap<Integer, Node> treeMap, String filename) {
+
 		try (BufferedReader brTask = new BufferedReader(new FileReader(
 				"C:\\Users\\Marta\\Documents\\CSIT\\II\\PIIS\\task.csv"))) {
-			BufferedReader brTrain = new BufferedReader(new FileReader(
-					"C:\\Users\\Marta\\Documents\\CSIT\\II\\PIIS\\train.csv"));
+
 			FileWriter fOutput = new FileWriter(
-					"C:\\Users\\Marta\\Documents\\CSIT\\II\\PIIS\\resulttree3.csv");
-
-			// read training set from file to ArrayList
-			String currentTrainLine;
-			ArrayList<Evaluation> trainSet = new ArrayList<Evaluation>();
-			while ((currentTrainLine = brTrain.readLine()) != null) {
-				String[] fieldsTrain = currentTrainLine.split(";");
-				trainSet.add(new Evaluation(Integer.valueOf(fieldsTrain[1]),
-						Integer.valueOf(fieldsTrain[2]), Integer
-								.valueOf(fieldsTrain[3])));
-			}
-
-			// spreading List - one List of evaluations per user
-			HashMap<Integer, ArrayList<Evaluation>> processedMap = new HashMap<Integer, ArrayList<Evaluation>>(); // mapping:
-																													// userId
-																													// ->
-																													// list
-																													// of
-			HashMap<Integer, Node> treeMap = new HashMap<Integer, Node>(); // mapping:
-																			// evaluations
-			int rememberUserId = -1;
-			ArrayList<Evaluation> userSet = new ArrayList<Evaluation>();
-			for (int i = 0; i < trainSet.size(); i++) {
-				Evaluation e = trainSet.get(i);
-				int userId = e.getUserId();
-				if (userId == rememberUserId || rememberUserId == -1) {
-					userSet.add(e);
-				} else {
-					processedMap.put(rememberUserId, userSet);
-					ArrayList<Attribute> attributes = AttributeHandler
-							.createUserAttribute(userSet, this.features);
-					Node root = new DecisionTree(this.features).buildTree(
-							userSet, attributes);
-					treeMap.put(rememberUserId, root);
-					userSet = new ArrayList<Evaluation>();
-					userSet.add(e);
-				}
-				rememberUserId = userId;
-			}
-			processedMap.put(rememberUserId, userSet);
-			System.out.println(processedMap.size());
-			ArrayList<Attribute> attributes = AttributeHandler
-					.createUserAttribute(userSet, this.features);
-
-			// for(Attribute attribute: attributes){
-			// System.out.println(attribute.name + " " +
-			// attribute.featureIndex);
-			// }
-			Node root = new DecisionTree(this.features).buildTree(userSet,
-					attributes);
-			treeMap.put(rememberUserId, root);
-
-
-			// read from task file and write to a new file with predicted result
+					"C:\\Users\\Marta\\Documents\\CSIT\\II\\PIIS\\"+filename+".csv");
 			String currentTaskLine;
 			while ((currentTaskLine = brTask.readLine()) != null) {
 				int predictedResult = 0;
 				String[] fieldsTask = currentTaskLine.split(";");
 				int userId = Integer.valueOf(fieldsTask[1]);
 				int movieId = Integer.valueOf(fieldsTask[2]);
-
-				predictedResult = predictResult(treeMap.get(userId),movieId);
-
-				fOutput.write(fieldsTask[0] + ";" + fieldsTask[1] + ";"
-						+ fieldsTask[2] + ";" + predictedResult + "\n");
+				movieId--;
+				
+					predictedResult = predictResult(treeMap.get(userId),
+							movieId);
+					fOutput.write(fieldsTask[0] + ";" + fieldsTask[1] + ";"
+							+ fieldsTask[2] + ";" + predictedResult + "\n");
+				
 			}
 
 			fOutput.close();
-			brTrain.close();
-			brTask.close();
 
+			brTask.close();
 		} catch (IOException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
+	private void prepareProcessMap(
+			HashMap<Integer, ArrayList<Evaluation>> processedMap,
+			ArrayList<Evaluation> trainSet) {
+		int rememberUserId = -1;
+		ArrayList<Evaluation> userSet = new ArrayList<Evaluation>();
+		for (int i = 0; i < trainSet.size(); i++) {
+			Evaluation e = trainSet.get(i);
+			int userId = e.getUserId();
+			if (userId == rememberUserId || rememberUserId == -1) {
+				userSet.add(e);
+			} else {
+				processedMap.put(rememberUserId, userSet);
+
+				userSet = new ArrayList<Evaluation>();
+				userSet.add(e);
+			}
+			rememberUserId = userId;
+		}
+		processedMap.put(rememberUserId, userSet);
+	}
+
+	private void prepareAttributes(
+			HashMap<Integer, ArrayList<Attribute>> userAttributes,
+			HashMap<Integer, ArrayList<Evaluation>> processedMap) {
+		for (Integer userId : processedMap.keySet()) {
+
+			ArrayList<Evaluation> userSet = processedMap.get(userId);
+			ArrayList<Attribute> attributes = AttributeHandler
+					.createUserAttribute(userSet, this.features);
+			userAttributes.put(userId, attributes);
+		}
+	}
+
+	private void createAllTrees(
+			HashMap<Integer, ArrayList<Attribute>> userAttributes,
+			HashMap<Integer, Node> treeMap,
+			HashMap<Integer, ArrayList<Evaluation>> processedMap) {
+
+		for (Integer userId : processedMap.keySet()) {
+			ArrayList<Evaluation> userSet = processedMap.get(userId);
+			ArrayList<Attribute> attributes = userAttributes.get(userId);
+			Node root = createUserTree(attributes, userSet);
+			treeMap.put(userId, root);
+		}
+
+	}
+
+	private Node createUserTree(ArrayList<Attribute> attributes,
+			ArrayList<Evaluation> userSet) {
+		Node root = new DecisionTree(this.features).buildTree(userSet,
+				attributes);
+		return root;
+	}
+
 	private int predictResult(Node root, int movieId) {
 
-		movieId--;
+		
 		// result = root.getPredictedValue();
 		while (!root.isLeaf()) {
 			Attribute attribute = root.getTestAttribute();
+		
 			if (attribute instanceof BooleanAttribute) {
 
 				if (features[movieId][attribute.getFeatureIndex()]
@@ -134,6 +245,7 @@ public class DecisionTreePredictor {
 					value = Double.valueOf(features[movieId][attribute
 							.getFeatureIndex()].split("-")[0]);
 				} else {
+					
 					value = Double.parseDouble(features[movieId][attribute
 							.getFeatureIndex()]);
 				}
@@ -149,31 +261,34 @@ public class DecisionTreePredictor {
 		}
 		return root.getPredictedValue();
 	}
-	
-	private void printTree(Node root){
-		 Queue<Node> currentLevel = new LinkedList<Node>();
-					 Queue<Node> nextLevel = new LinkedList<Node>();
-					
-					 currentLevel.add(root);
-					
-					 while (!currentLevel.isEmpty()) {
-					 Iterator<Node> iter = currentLevel.iterator();
-					 while (iter.hasNext()) {
-					 Node currentNode = iter.next();
-					 if (currentNode.getChildren() != null) {
-					 nextLevel.add(currentNode.getChildren()[0]);
-					 }
-					 if (currentNode.getChildren() != null) {
-					 nextLevel.add(currentNode.getChildren()[1]);
-					 }
-					 System.out.print((currentNode.getTestAttribute()!=null?currentNode.getTestAttribute().getName()
-					 : currentNode.getPredictedValue()) + " ||| ");
-					 }
-					 System.out.println();
-					 currentLevel = nextLevel;
-					 nextLevel = new LinkedList<Node>();
-					
-					 }
+
+	private void printTree(Node root) {
+		Queue<Node> currentLevel = new LinkedList<Node>();
+		Queue<Node> nextLevel = new LinkedList<Node>();
+
+		currentLevel.add(root);
+
+		while (!currentLevel.isEmpty()) {
+			Iterator<Node> iter = currentLevel.iterator();
+			while (iter.hasNext()) {
+				Node currentNode = iter.next();
+				if (currentNode.getChildren() != null) {
+					nextLevel.add(currentNode.getChildren()[0]);
+				}
+				if (currentNode.getChildren() != null) {
+					nextLevel.add(currentNode.getChildren()[1]);
+				}
+				System.out
+						.print((currentNode.getTestAttribute() != null ? currentNode
+								.getTestAttribute().getName() : currentNode
+								.getPredictedValue())
+								+ " ||| ");
+			}
+			System.out.println();
+			currentLevel = nextLevel;
+			nextLevel = new LinkedList<Node>();
+
+		}
 	}
 
 }

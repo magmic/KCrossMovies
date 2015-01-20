@@ -15,7 +15,7 @@ public class TAndVSetInitializor {
 	HashMap<Integer, ArrayList<Evaluation>> validationMap = new HashMap<Integer, ArrayList<Evaluation>>(); //mapping: userId -> list of evaluations
 	//validationMap probaly not needed
 	
-	TAndVSetInitializor() {
+	public TAndVSetInitializor() {
 //		this.comparisonResults = comparisonResults;
 //		this.k = k;
 //		this.kBestMovieIds = new int[k];
@@ -25,7 +25,7 @@ public class TAndVSetInitializor {
 		
 		try
 		{
-			BufferedReader brTrain = new BufferedReader(new FileReader("C:\\Users\\Okruszon\\Desktop\\Programming of Intelligent Information Systems\\Part II, Task 3\\train.csv")); 
+			BufferedReader brTrain = new BufferedReader(new FileReader("C:\\Users\\Marta\\Documents\\CSIT\\II\\PIIS\\train.csv")); 
 			//FileWriter fOutput = new FileWriter("C:\\Users\\Okruszon\\Desktop\\Programming of Intelligent Information Systems\\Part II, Task 4\\result"+fileEnding+".csv"); 
 			
 			//read training set from file to ArrayList

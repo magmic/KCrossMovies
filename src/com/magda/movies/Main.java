@@ -13,8 +13,11 @@ public class Main {
 		// new KBestHandler(fc.getComparisonResults(), 1);
 		// new KBestHandler(fc.getComparisonResults(), 3);
 		// new KBestHandler(fc.getComparisonResults(), 5);
-		DecisionTreePredictor tree = new DecisionTreePredictor(fc.getFeatures());
-
+		DecisionTreePredictor tree = new DecisionTreePredictor(
+				fc.getFeatures(), true);
+		System.out.println("-----------\n");
+		DecisionTreePredictor tree1 = new DecisionTreePredictor(
+				fc.getFeatures(), false);
 		// FeaturesComparator fc = new
 		// FeaturesComparator("C:\\Users\\Okruszon\\Desktop\\Programming of Intelligent Information Systems\\Part II, Task 3\\data.csv");
 		// TAndVSetInitializor data = new TAndVSetInitializor();
